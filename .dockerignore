@@ -1,0 +1,13 @@
+.git
+.next
+node_modules
+npm-debug.log
+.env.local
+.env*.local
+Dockerfile
+.dockerignore
+k8s/
+terraform/
+k6/
+README.md
+*.md
