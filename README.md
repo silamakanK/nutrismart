@@ -230,4 +230,4 @@ Résultats observés lors du test :
 
 ## Contexte pédagogique
 
-Projet réalisé en binôme dans le cadre du module **DevOps — Kubernetes / Terraform** à l'EEMI (2026). Objectif : concevoir et déployer une plateforme applicative scalable avec autoscaling, monitoring et analyse GreenOps.
+Projet réalisé dans le cadre du module **DevOps — Kubernetes / Terraform** à l'EEMI (2026). Objectif : concevoir et déployer une plateforme applicative scalable avec autoscaling, monitoring et analyse GreenOps.
