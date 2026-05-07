@@ -1,109 +1,58 @@
-# Recipes App — Génération de recettes personnalisées & analyse nutritionnelle
+# NutriSmart — Génération de recettes personnalisées & analyse nutritionnelle
 
-**Recipes App** est une plateforme web développée avec **Next.js** permettant de concevoir un système complet de **génération, de gestion et d’analyse nutritionnelle de recettes personnalisées**.
-L’application s’appuie sur **Supabase** pour la base de données, l’authentification et le stockage, et propose une expérience utilisateur centrée sur la personnalisation alimentaire et la nutrition.
+**NutriSmart** est une plateforme web full stack développée avec **Next.js** permettant de générer, gérer et analyser nutritionnellement des recettes personnalisées.
 
-Ce projet est réalisé dans un cadre pédagogique et vise à mettre en œuvre un produit web complet, de la conception UX jusqu’à la logique métier backend.
+L'application s'appuie sur **Supabase** pour la base de données, l'authentification et le stockage, sur **OpenAI** pour la génération de recettes par IA, et est déployée sur **Kubernetes** via un cluster local **kind**, provisionné avec **Terraform**.
 
----
-
-## Objectifs du projet
-
-* Concevoir une application **full stack moderne**.
-* Mettre en pratique la gestion de projet en binôme.
-* Implémenter une logique métier réaliste autour de la nutrition et des recettes.
-* Manipuler une base de données sécurisée avec **Row Level Security (RLS)**.
-* Utiliser des **Server Actions** et une architecture propre avec Next.js App Router.
+> Projet réalisé dans le cadre du module DevOps — EEMI 2026
 
 ---
 
 ## Stack technique
 
-* **Framework** : Next.js (App Router)
-* **Langage** : TypeScript
-* **UI** : Tailwind CSS
-* **Backend / BDD / Auth** : Supabase
-* **Stockage fichiers** : Supabase Storage
-* **Architecture** : Server Actions sécurisées
-* **Déploiement** : Vercel (recommandé)
+| Couche | Technologie |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Langage | TypeScript |
+| UI | Tailwind CSS |
+| Base de données / Auth | Supabase (PostgreSQL + Auth + Storage) |
+| IA | OpenAI API (gpt-4o-mini) |
+| Conteneurisation | Docker (multi-stage build) |
+| Orchestration | Kubernetes — kind (local) |
+| Provisioning | Terraform |
+| Tests de charge | k6 + Prometheus + Grafana |
 
 ---
 
-## Fonctionnalités principales
+## Fonctionnalités
 
-### Authentification
-
-* Création de compte utilisateur
-* Connexion / Déconnexion
-* Persistance de session via Supabase Auth
-
-### Gestion du profil
-
-* Définition et modification des informations personnelles
-* Gestion des **intolérances alimentaires**
-* Définition de l’objectif nutritionnel :
-
-  * prise de masse
-  * perte de poids
-  * gain d’énergie
-* Paramètres nutritionnels personnalisés
-
-### Gestion des recettes
-
-* Visualisation de toutes les recettes créées par l’utilisateur
-* Recherche par :
-
-  * nom
-  * ingrédient
-  * type de plat
-* Consultation détaillée d’une recette :
-
-  * ingrédients
-  * étapes
-  * analyse nutritionnelle complète :
-
-    * calories
-    * protéines
-    * glucides
-    * lipides
-    * vitamines et minéraux
-
-### Génération de recettes
-
-* Création guidée d’une nouvelle recette en fonction :
-
-  * des ingrédients disponibles
-  * du nombre de personnes
-  * des contraintes alimentaires
-* Génération automatique du contenu et des apports nutritionnels
-
-### Liste de courses intelligente
-
-* Sélection de plusieurs recettes (ex. **3 plats + 2 desserts**)
-* Génération automatique d’une **liste de courses consolidée**
-* Regroupement par catégories (rayons)
-* Ajustement automatique des quantités
+- Authentification complète (inscription, connexion, session JWT)
+- Profil utilisateur : intolérances alimentaires, objectifs nutritionnels (prise de masse, perte de poids, gain d'énergie)
+- Génération de recettes par IA selon les contraintes de l'utilisateur
+- Analyse nutritionnelle : calories, protéines, glucides, lipides, vitamines, minéraux
+- Recherche de recettes par nom, ingrédient ou type de plat
+- Liste de courses consolidée pour une sélection de recettes
 
 ---
 
-## Installation depuis GitHub
+## Installation locale (développement)
 
-### 1 Cloner le dépôt
+### 1. Cloner le dépôt
 
 ```bash
 git clone https://github.com/silamakanK/recipes-app.git
 cd recipes-app
 ```
 
-### 2 Installer les dépendances
+### 2. Installer les dépendances
 
 ```bash
 npm install
 ```
 
-### 3 Configurer les variables d’environnement
+### 3. Configurer les variables d'environnement
 
-Créer un fichier `.env.local` à la racine du projet :
+Créer un fichier `.env.local` à la racine :
 
 ```env
 SUPABASE_URL=your_supabase_project_url
@@ -112,49 +61,173 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 OPENAI_API_KEY=your_openai_api_key
 ```
 
-### 4️⃣ Lancer le serveur de développement
+### 4. Lancer le serveur de développement
 
 ```bash
 npm run dev
 ```
 
-Ouvrir ensuite : [http://localhost:3000](http://localhost:3000)
+Ouvrir : [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Déploiement Kubernetes (local avec kind)
+
+### Prérequis
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [kind](https://kind.sigs.k8s.io/)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [Terraform](https://developer.hashicorp.com/terraform/install)
+- [Helm](https://helm.sh/docs/intro/install/)
+
+### 1. Créer le cluster kind
+
+```bash
+kind create cluster --name nutrismart --config kind/cluster-config.yaml
+```
+
+Le cluster est configuré avec **1 control-plane + 2 workers**.
+
+### 2. Provisionner l'infrastructure avec Terraform
+
+```bash
+cd terraform/
+terraform init
+terraform apply
+```
+
+Terraform crée les namespaces, ConfigMaps et Secrets Kubernetes nécessaires.
+
+### 3. Builder et charger l'image Docker
+
+```bash
+# Builder l'image (mode standalone Next.js)
+docker build -t nutrismart-nextjs:latest .
+
+# Charger l'image dans le cluster kind
+kind load docker-image nutrismart-nextjs:latest --name nutrismart
+```
+
+> L'image n'est pas publiée sur un registry distant. Le Deployment utilise `imagePullPolicy: Never`.
+
+### 4. Déployer les manifestes Kubernetes
+
+```bash
+kubectl apply -f k8s/
+```
+
+Cela déploie :
+- Le **Deployment** Next.js (2 réplicas minimum)
+- Le **Service** NodePort
+- Le **Horizontal Pod Autoscaler** (HPA) — seuil CPU 60 %, max 5 pods
+- Le **ConfigMap** et le **Secret** pour les variables d'environnement
+
+### 5. Accéder à l'application
+
+```bash
+kubectl get svc -n nutrismart
+```
+
+L'application est accessible sur le port NodePort exposé (ex: `http://nutrismart.local:9080`).
+
+---
+
+## Monitoring (Prometheus + Grafana)
+
+### Installer la stack de monitoring
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm install prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace
+```
+
+### Accéder aux dashboards
+
+```bash
+# Prometheus
+kubectl port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090 -n monitoring
+
+# Grafana
+kubectl port-forward svc/prometheus-grafana 3001:80 -n monitoring
+```
+
+- Prometheus : [http://localhost:9090](http://localhost:9090)
+- Grafana : [http://localhost:3001](http://localhost:3001) — login `admin`
+
+Le dashboard **NutriSmart — Tests de charge** affiche en temps réel :
+- Nombre de pods actifs (HPA)
+- Utilisation CPU (avec seuil à 60 %)
+- Utilisation mémoire (avec limite à 256 Mo)
+
+---
+
+## Tests de charge (k6)
+
+```bash
+k6 run -e BASE_URL=http://nutrismart.local:9080 k6/load-test.js
+```
+
+Le script simule **50 VUs** sur **8 minutes** en montée progressive (5 stages).
+
+Résultats observés lors du test :
+- Scale-out déclenché à 68 % de CPU → montée jusqu'à 5 pods
+- Pic CPU à 103–104 %
+- RAM pic à ~320 Mo (limit à revoir : 256 Mo → 512 Mo)
+- Scale-in propre après la charge (retour à 2 pods)
+
+---
+
+## Structure du projet
+
+```
+.
+├── app/                  # Pages et Server Actions Next.js
+├── components/           # Composants React
+├── k8s/                  # Manifestes Kubernetes
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   ├── hpa.yaml
+│   ├── configmap.yaml
+│   └── secret.yaml
+├── terraform/            # Infrastructure as Code
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+├── k6/                   # Scripts de test de charge
+│   └── load-test.js
+├── kind/                 # Configuration du cluster kind
+│   └── cluster-config.yaml
+├── Dockerfile            # Multi-stage build Next.js standalone
+└── .env.local            # Variables d'environnement (non versionné)
+```
 
 ---
 
 ## Scripts disponibles
 
-| Script          | Description                              |
-| --------------- | ---------------------------------------- |
-| `npm run dev`   | Démarre le serveur en mode développement |
-| `npm run build` | Génère la version de production          |
-| `npm start`     | Lance le serveur de production local     |
-| `npm run lint`  | Vérifie la qualité du code               |
-
-
-## Sécurité & bonnes pratiques
-
-* Row Level Security (RLS) activée sur toutes les tables sensibles
-* Accès aux données limité à l’utilisateur authentifié
-* Séparation stricte entre logique client et serveur
-* Stockage des fichiers via Supabase Storage (URL uniquement en base)
+| Script | Description |
+|---|---|
+| `npm run dev` | Serveur de développement |
+| `npm run build` | Build de production |
+| `npm start` | Serveur de production local |
+| `npm run lint` | Vérification du code |
 
 ---
 
-## Évolutions possibles
+## Sécurité
 
-* Partage collaboratif de la liste de courses afin de permettre à plusieurs utilisateurs (famille, colocataires, partenaires) de consulter et compléter une même liste.
+- Row Level Security (RLS) activée sur toutes les tables Supabase
+- Variables sensibles gérées via **Secrets Kubernetes** (non committées)
+- Séparation stricte entre logique client et serveur (Server Actions)
+- `imagePullPolicy: Never` pour éviter les pulls non contrôlés
 
-* Ajout d’une page “Blog” pour proposer des articles autour de la nutrition, des conseils alimentaires, des recettes thématiques ou des bonnes pratiques culinaires.
-
-* Amélioration de la génération de recettes par l’IA, avec la prise en compte de variantes (saisons, budget, temps de préparation, préférences culinaires).
-
-* Ajout d’un historique nutritionnel permettant de suivre l’évolution des apports sur plusieurs jours ou semaines.
-
-* Optimisation des performances et de l’accessibilité, en respectant les bonnes pratiques (temps de chargement, navigation clavier, contrastes, responsive design).
-
+---
 
 ## Contexte pédagogique
 
-> **Sujet du projet**
-> Réaliser un système de génération et de gestion de recettes de cuisine personnalisées avec analyse nutritionnelle, en binôme, permettant à un internaute de gérer son profil, ses recettes, et d’obtenir automatiquement une liste de courses à partir de ses créations.
+Projet réalisé en binôme dans le cadre du module **DevOps — Kubernetes / Terraform** à l'EEMI (2026). Objectif : concevoir et déployer une plateforme applicative scalable avec autoscaling, monitoring et analyse GreenOps.
